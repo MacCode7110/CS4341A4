@@ -14,6 +14,9 @@
 
 # Parts a and b combined:
 
+import pandas as pd
+
+
 # Naive Bayes Classifier implementation with Laplacian smoothing:
 
 class NaiveBayesClassifier:
@@ -24,5 +27,6 @@ class NaiveBayesClassifier:
 
 # Load and split both datasets into training and testing:
 
-
-
+dbworld_bodies_stemmed = pd.read_csv('dbworld_bodies_stemmed', sep='\t',
+                       header=None)
+dbworld_subjects_stemmed = pd.read_csv('dbworld_subjects_stemmed', sep='\t')
