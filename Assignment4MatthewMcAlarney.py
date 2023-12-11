@@ -10,7 +10,7 @@
 # The 2 to n-1 columns are unique words found in all the emails, they have binary
 # values i.e. 0 means that the word did not appear in the email and 1 means that the
 # word appeared.
-# The nth column is CLASS, 0 means discard email and 1 means keep email.
+# The nth column is CLASS, 0 means discard email (SPAM) and 1 means keep email (HAM).
 
 # Parts a and b combined:
 
@@ -19,18 +19,49 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 
+# Key assumption: In order to use Bayes Rule in the Naive Bayes Classifier implementation, we must assume that the occurrences of different words are mutually independent events.
+
 # Naive Bayes Classifier implementation with Laplacian smoothing:
 
 class NaiveBayesClassifier:
 
-    def __init__(self):
+    def __init__(self, laplace_smoothing_parameter):
+        self.laplace_smoothing_parameter = laplace_smoothing_parameter
+
+
+    def create_vocabulary(self):
+        # Create the vocabulary (list of unique words) for each of the training sets:
+        bodies_training_data_vocab = []
+        subjects_training_data_vocab = []
+
+        for (word, count_per_email) in bodies_training_data_x.items():
+            bodies_training_data_vocab.append(word)
+
+        for (word, count_per_email) in subjects_training_data_x.items():
+            subjects_training_data_vocab.append(word)
+
+    def train_classifier(self):
+        pass
+
+    def test_classifier(self):
+        pass
+
+    def generate_confusion_matrix(self):
+        pass
+
+    def report_f_measure(self):
+        pass
+
+    def run_algorithm(self, run_on_training):
         pass
 
 
 # Load and split both datasets into training and testing:
 
-dbworld_bodies_stemmed = pd.read_csv('dbworld_bodies_stemmed.csv', delimiter=',')  # Retrieves the data in the form of a dataframe.
-dbworld_subjects_stemmed = pd.read_csv('dbworld_subjects_stemmed.csv', delimiter=',')  # Retrieves the data in the form of a dataframe.
+dbworld_bodies_stemmed = pd.read_csv('dbworld_bodies_stemmed.csv',
+                                     delimiter=',')  # Retrieves the data in the form of a dataframe.
+dbworld_subjects_stemmed = pd.read_csv('dbworld_subjects_stemmed.csv',
+                                       delimiter=',')  # Retrieves the data in the form of a dataframe.
 
 # Drop the id column from both datasets:
 updated_dbworld_bodies_stemmed = dbworld_bodies_stemmed.drop(columns=['id'], axis=1)
@@ -54,26 +85,22 @@ target_dataframe_dbworld_subjects_stemmed = updated_dbworld_subjects_stemmed.loc
 
 # train_test_split the db_world_bodies data:
 
-bodies_training_data_x, bodies_testing_data_x, bodies_training_data_y, bodies_testing_data_y = train_test_split(feature_dataframe_dbworld_bodies_stemmed, target_dataframe_dbworld_bodies_stemmed,
-                                                                                                                train_size=0.8, shuffle=True,
-                                                                                                                stratify=target_dataframe_dbworld_bodies_stemmed)
+bodies_training_data_x, bodies_testing_data_x, bodies_training_data_y, bodies_testing_data_y = train_test_split(
+    feature_dataframe_dbworld_bodies_stemmed, target_dataframe_dbworld_bodies_stemmed,
+    train_size=0.8, shuffle=True,
+    stratify=target_dataframe_dbworld_bodies_stemmed)
+
 # train_test_split the db_world_subjects data:
 
-subjects_training_data_x, subjects_testing_data_x, subjects_training_data_y, subjects_testing_data_y = train_test_split(feature_dataframe_dbworld_subjects_stemmed, target_dataframe_dbworld_subjects_stemmed,
-                                                                                    train_size=0.8, shuffle=True,
-                                                                                    stratify=target_dataframe_dbworld_subjects_stemmed)
+subjects_training_data_x, subjects_testing_data_x, subjects_training_data_y, subjects_testing_data_y = train_test_split(
+    feature_dataframe_dbworld_subjects_stemmed, target_dataframe_dbworld_subjects_stemmed,
+    train_size=0.8, shuffle=True,
+    stratify=target_dataframe_dbworld_subjects_stemmed)
 
-# Convert the training and testing data to numpy arrays:
 
-bodies_training_data_x_to_numpy = bodies_training_data_x.to_numpy()
-bodies_testing_data_x_to_numpy = bodies_testing_data_x.to_numpy()
-bodies_training_data_y_to_numpy = bodies_training_data_y.to_numpy()
-bodies_testing_data_y_to_numpy = bodies_testing_data_y.to_numpy()
 
-subjects_training_data_x_to_numpy = subjects_training_data_x.to_numpy()
-subjects_testing_data_x_to_numpy = subjects_testing_data_x.to_numpy()
-subjects_training_data_y_to_numpy = subjects_training_data_y.to_numpy()
-subjects_testing_data_y_to_numpy = subjects_testing_data_y.to_numpy()
+
+
 
 
 
