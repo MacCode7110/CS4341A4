@@ -15,7 +15,6 @@
 # Parts a and b combined:
 
 import pandas as pd
-import numpy as np
 from sklearn.model_selection import train_test_split
 
 
@@ -28,17 +27,26 @@ class NaiveBayesClassifier:
     def __init__(self, laplace_smoothing_parameter):
         self.laplace_smoothing_parameter = laplace_smoothing_parameter
 
+    @staticmethod
+    def get_vocabulary(feature_data):
+        # Create the vocabulary (list of unique words) for the current training dataset:
+        training_data_vocab = []
 
-    def create_vocabulary(self):
-        # Create the vocabulary (list of unique words) for each of the training sets:
-        bodies_training_data_vocab = []
-        subjects_training_data_vocab = []
+        for (word, counts_per_email) in feature_data.items():
+            training_data_vocab.append(word)
 
-        for (word, count_per_email) in bodies_training_data_x.items():
-            bodies_training_data_vocab.append(word)
+        return training_data_vocab
 
-        for (word, count_per_email) in subjects_training_data_x.items():
-            subjects_training_data_vocab.append(word)
+    @staticmethod
+    def get_class_information(feature_data, target_data):
+        spam_emails = target_data[target_data['CLASS'] == 0]
+        ham_emails = target_data[target_data['CLASS'] == 1]
+        probability_of_spam_email = len(spam_emails) / len(target_data)
+        probability_of_ham_email = len(ham_emails) / len(target_data)
+
+        for (word, counts_per_email) in feature_data.items():
+            # number_of_words_in_all_spam_emails =
+            # number_of_words_in_all_ham_emails =
 
     def train_classifier(self):
         pass
@@ -52,8 +60,15 @@ class NaiveBayesClassifier:
     def report_f_measure(self):
         pass
 
-    def run_algorithm(self, run_on_training):
-        pass
+    def run_algorithm(self, run_on_training, feature_data, target_data):
+        if run_on_training:
+            vocabulary = self.get_vocabulary(feature_data)
+            self.get_class_information(feature_data, target_data)
+            self.train_classifier()
+        else:
+            self.test_classifier()
+            self.generate_confusion_matrix()
+            self.report_f_measure()
 
 
 # Load and split both datasets into training and testing:
@@ -97,10 +112,15 @@ subjects_training_data_x, subjects_testing_data_x, subjects_training_data_y, sub
     train_size=0.8, shuffle=True,
     stratify=target_dataframe_dbworld_subjects_stemmed)
 
+# Run the Naive Bayes Classifier on the training and test data:
 
+naive_bayes_classifier_for_bodies = NaiveBayesClassifier(1)
+naive_bayes_classifier_for_subjects = NaiveBayesClassifier(1)
 
+naive_bayes_classifier_for_bodies.run_algorithm(True, bodies_training_data_x, bodies_training_data_y)
+naive_bayes_classifier_for_bodies.run_algorithm(False, bodies_testing_data_x, bodies_testing_data_y)
 
+naive_bayes_classifier_for_subjects.run_algorithm(True, subjects_training_data_x, subjects_training_data_y)
+naive_bayes_classifier_for_subjects.run_algorithm(False, subjects_testing_data_x, subjects_testing_data_y)
 
-
-
-
+# Below we use the scikit learn Naive Bayes classifier on the bodies and subjects datasets and report a comparison of results between the implementation from scratch and the scikit-learn implementation:
