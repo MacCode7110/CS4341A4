@@ -15,6 +15,7 @@
 # Parts a and b combined:
 
 import pandas as pd
+import numpy as np
 from sklearn.model_selection import train_test_split
 
 
@@ -31,22 +32,45 @@ class NaiveBayesClassifier:
     def get_vocabulary(feature_data):
         # Create the vocabulary (list of unique words) for the current training dataset:
         training_data_vocab = []
-
-        for (word, counts_per_email) in feature_data.items():
+        for (word, counts_for_every_email) in feature_data.items():
             training_data_vocab.append(word)
-
         return training_data_vocab
 
     @staticmethod
-    def get_class_information(feature_data, target_data):
-        spam_emails = target_data[target_data['CLASS'] == 0]
-        ham_emails = target_data[target_data['CLASS'] == 1]
-        probability_of_spam_email = len(spam_emails) / len(target_data)
-        probability_of_ham_email = len(ham_emails) / len(target_data)
+    def get_spam_emails(combined_dataframe):
+        spam_emails = combined_dataframe[combined_dataframe['CLASS'] == 0]
+        return spam_emails
 
-        for (word, counts_per_email) in feature_data.items():
-            # number_of_words_in_all_spam_emails =
-            # number_of_words_in_all_ham_emails =
+    @staticmethod
+    def get_ham_emails(combined_dataframe):
+        ham_emails = combined_dataframe[combined_dataframe['CLASS'] == 1]
+        return ham_emails
+
+    @staticmethod
+    def get_ham_probability_prior(ham_emails, combined_dataframe):
+        probability_of_ham_email = len(ham_emails) / len(combined_dataframe)
+        return probability_of_ham_email
+
+    @staticmethod
+    def get_spam_probability_prior(spam_emails, combined_dataframe):
+        probability_of_spam_email = len(spam_emails) / len(combined_dataframe)
+        return probability_of_spam_email
+
+    @staticmethod
+    def get_number_of_words_in_all_spam_emails(spam_emails):
+        updated_spam_emails = spam_emails.drop("CLASS", axis='columns')
+        number_of_words_per_spam_email = updated_spam_emails.sum(axis='columns')
+        number_of_words_in_all_spam_emails = number_of_words_per_spam_email.sum()
+        number_of_words_in_all_spam_emails_to_int = number_of_words_in_all_spam_emails.item()
+        return number_of_words_in_all_spam_emails_to_int
+
+    @staticmethod
+    def get_number_of_words_in_all_ham_emails(ham_emails):
+        updated_ham_emails = ham_emails.drop("CLASS", axis='columns')
+        number_of_words_per_ham_email = updated_ham_emails.sum(axis='columns')
+        number_of_words_in_all_ham_emails = number_of_words_per_ham_email.sum()
+        number_of_words_in_all_ham_emails_to_int = number_of_words_in_all_ham_emails.item()
+        return number_of_words_in_all_ham_emails_to_int
 
     def train_classifier(self):
         pass
@@ -61,9 +85,15 @@ class NaiveBayesClassifier:
         pass
 
     def run_algorithm(self, run_on_training, feature_data, target_data):
+        combined_dataframe = feature_data.join(target_data)
         if run_on_training:
             vocabulary = self.get_vocabulary(feature_data)
-            self.get_class_information(feature_data, target_data)
+            ham_emails = self.get_ham_emails(combined_dataframe)
+            spam_emails = self.get_spam_emails(combined_dataframe)
+            ham_probability_prior = self.get_ham_probability_prior(ham_emails, combined_dataframe)
+            spam_probability_prior = self.get_spam_probability_prior(spam_emails, combined_dataframe)
+            number_of_words_in_all_ham_emails = self.get_number_of_words_in_all_ham_emails(ham_emails)
+            number_of_words_in_all_spam_emails = self.get_number_of_words_in_all_spam_emails(spam_emails)
             self.train_classifier()
         else:
             self.test_classifier()
@@ -118,9 +148,9 @@ naive_bayes_classifier_for_bodies = NaiveBayesClassifier(1)
 naive_bayes_classifier_for_subjects = NaiveBayesClassifier(1)
 
 naive_bayes_classifier_for_bodies.run_algorithm(True, bodies_training_data_x, bodies_training_data_y)
-naive_bayes_classifier_for_bodies.run_algorithm(False, bodies_testing_data_x, bodies_testing_data_y)
+# naive_bayes_classifier_for_bodies.run_algorithm(False, bodies_testing_data_x, bodies_testing_data_y)
 
-naive_bayes_classifier_for_subjects.run_algorithm(True, subjects_training_data_x, subjects_training_data_y)
-naive_bayes_classifier_for_subjects.run_algorithm(False, subjects_testing_data_x, subjects_testing_data_y)
+# naive_bayes_classifier_for_subjects.run_algorithm(True, subjects_training_data_x, subjects_training_data_y)
+# naive_bayes_classifier_for_subjects.run_algorithm(False, subjects_testing_data_x, subjects_testing_data_y)
 
 # Below we use the scikit learn Naive Bayes classifier on the bodies and subjects datasets and report a comparison of results between the implementation from scratch and the scikit-learn implementation:
