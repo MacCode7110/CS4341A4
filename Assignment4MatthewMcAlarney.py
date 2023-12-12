@@ -14,18 +14,23 @@
 
 # Parts a and b combined:
 
-import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
-
-
-# Key assumption: In order to use Bayes Rule in the Naive Bayes Classifier implementation, we must assume that the occurrences of different words are mutually independent events.
+# Key assumptions:
+# 1. In order to use the Naive Bayes Classifier implementation, we must assume that the occurrences of different words are mutually independent events.
+# 2. There are two possible classes that emails can be classified as; Ham and Spam classes. Thus, the Naive Bayes Classifier below is designed around these two classes.
 
 # Naive Bayes Classifier implementation with Laplacian smoothing:
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+
 
 class NaiveBayesClassifier:
 
     def __init__(self, laplace_smoothing_parameter):
+        self.ham_conditional_probabilities = []
+        self.spam_conditional_probabilities = []
+        self.ham_probability_prior = None
+        self.spam_probability_prior = None
         self.laplace_smoothing_parameter = laplace_smoothing_parameter
 
     @staticmethod
@@ -46,37 +51,50 @@ class NaiveBayesClassifier:
         ham_emails = combined_dataframe[combined_dataframe['CLASS'] == 1]
         return ham_emails
 
-    @staticmethod
-    def get_ham_probability_prior(ham_emails, combined_dataframe):
-        probability_of_ham_email = len(ham_emails) / len(combined_dataframe)
-        return probability_of_ham_email
+    def calculate_ham_probability_prior(self, ham_emails, combined_dataframe):
+        self.ham_probability_prior = len(ham_emails) / len(combined_dataframe)
+
+    def calculate_spam_probability_prior(self, spam_emails, combined_dataframe):
+        self.spam_probability_prior = len(spam_emails) / len(combined_dataframe)
 
     @staticmethod
-    def get_spam_probability_prior(spam_emails, combined_dataframe):
-        probability_of_spam_email = len(spam_emails) / len(combined_dataframe)
-        return probability_of_spam_email
-
-    @staticmethod
-    def get_number_of_words_in_all_spam_emails(spam_emails):
+    def get_total_number_of_words_in_all_spam_emails(spam_emails):
+        # The following code produces the equivalent affect to summing the occurrences/tokens of each unique word in the Spam class as shown in the algorithm on the slides.
         updated_spam_emails = spam_emails.drop("CLASS", axis='columns')
         number_of_words_per_spam_email = updated_spam_emails.sum(axis='columns')
-        number_of_words_in_all_spam_emails = number_of_words_per_spam_email.sum()
-        number_of_words_in_all_spam_emails_to_int = number_of_words_in_all_spam_emails.item()
-        return number_of_words_in_all_spam_emails_to_int
+        total_number_of_words_in_all_spam_emails = number_of_words_per_spam_email.sum()
+        total_number_of_words_in_all_spam_emails_to_int = total_number_of_words_in_all_spam_emails.item()
+        return total_number_of_words_in_all_spam_emails_to_int
 
     @staticmethod
-    def get_number_of_words_in_all_ham_emails(ham_emails):
+    def get_total_number_of_words_in_all_ham_emails(ham_emails):
+        # The following code produces the equivalent affect to summing the occurrences/tokens of each unique word in the Ham class as shown in the algorithm on the slides.
         updated_ham_emails = ham_emails.drop("CLASS", axis='columns')
         number_of_words_per_ham_email = updated_ham_emails.sum(axis='columns')
-        number_of_words_in_all_ham_emails = number_of_words_per_ham_email.sum()
-        number_of_words_in_all_ham_emails_to_int = number_of_words_in_all_ham_emails.item()
-        return number_of_words_in_all_ham_emails_to_int
+        total_number_of_words_in_all_ham_emails = number_of_words_per_ham_email.sum()
+        total_number_of_words_in_all_ham_emails_to_int = total_number_of_words_in_all_ham_emails.item()
+        return total_number_of_words_in_all_ham_emails_to_int
 
-    def train_classifier(self):
-        pass
+    def train_classifier(self, vocabulary, ham_emails, spam_emails, total_number_of_words_in_all_ham_emails, total_number_of_words_in_all_spam_emails):
+        # Store a list of dictionaries for the conditional probabilities (probabilities of each word occurring given the Ham and Spam categories):
+        for unique_word in vocabulary:
+            # Sum the occurrences of the unique word in each ham email (in the current column).
+            occurrences_of_unique_word_in_ham = ham_emails[unique_word].sum()
+            # In this equation, note that laplace smoothing is implemented in the numerator.
+            # In addition, adding the length of the vocabulary to the total number of words in the current class is equivalent to the conditional probability equation shown on the slides; in the denominator, 1 is added to the token count for the current unique word, which ultimately means that 1 is summed the same number of times as the number of unique words (the number of unique words is the length of the vocabulary).
+            conditional_probability_of_unique_word_given_ham = (occurrences_of_unique_word_in_ham + self.laplace_smoothing_parameter) / (total_number_of_words_in_all_ham_emails + len(vocabulary))
+            self.ham_conditional_probabilities.append({unique_word: conditional_probability_of_unique_word_given_ham})
+            # Sum the occurrences of the unique word in each spam email (in the current column).
+            occurrences_of_unique_word_in_spam = spam_emails[unique_word].sum()
+            # In this equation, note that laplace smoothing is implemented in the numerator.
+            # In addition, adding the length of the vocabulary to the total number of words in the current class is equivalent to the conditional probability equation shown on the slides; in the denominator, 1 is added to the token count for the current unique word, which ultimately means that 1 is summed the same number of times as the number of unique words (the number of unique words is the length of the vocabulary).
+            conditional_probability_of_unique_word_given_spam = (occurrences_of_unique_word_in_spam + self.laplace_smoothing_parameter) / (total_number_of_words_in_all_spam_emails + len(vocabulary))
+            self.spam_conditional_probabilities.append({unique_word: conditional_probability_of_unique_word_given_spam})
 
-    def test_classifier(self):
-        pass
+    def test_classifier(self, feature_data):
+        # The goal of test_classifier is to classify each email in the feature data as either Ham or Spam.
+        # We need to iterate through each word in the current email in order to provide a classification.
+        predicted_classifications_per_email = []
 
     def generate_confusion_matrix(self):
         pass
@@ -90,13 +108,13 @@ class NaiveBayesClassifier:
             vocabulary = self.get_vocabulary(feature_data)
             ham_emails = self.get_ham_emails(combined_dataframe)
             spam_emails = self.get_spam_emails(combined_dataframe)
-            ham_probability_prior = self.get_ham_probability_prior(ham_emails, combined_dataframe)
-            spam_probability_prior = self.get_spam_probability_prior(spam_emails, combined_dataframe)
-            number_of_words_in_all_ham_emails = self.get_number_of_words_in_all_ham_emails(ham_emails)
-            number_of_words_in_all_spam_emails = self.get_number_of_words_in_all_spam_emails(spam_emails)
-            self.train_classifier()
+            self.calculate_ham_probability_prior(ham_emails, combined_dataframe)
+            self.calculate_spam_probability_prior(spam_emails, combined_dataframe)
+            number_of_words_in_all_ham_emails = self.get_total_number_of_words_in_all_ham_emails(ham_emails)
+            number_of_words_in_all_spam_emails = self.get_total_number_of_words_in_all_spam_emails(spam_emails)
+            self.train_classifier(vocabulary, ham_emails, spam_emails, number_of_words_in_all_ham_emails, number_of_words_in_all_spam_emails)
         else:
-            self.test_classifier()
+            self.test_classifier(feature_data)
             self.generate_confusion_matrix()
             self.report_f_measure()
 
