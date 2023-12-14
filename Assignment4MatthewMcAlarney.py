@@ -121,8 +121,9 @@ class NaiveBayesClassifier:
             probability_of_spam_per_email = np.append(probability_of_spam_per_email, {email_index: math.log(self.spam_probability_prior)})
             unique_word_index = 0
             for unique_word in feature_data.columns:
-                probability_of_ham_per_email[list_index_placeholder].update({email_index: (probability_of_ham_per_email[list_index_placeholder].get(email_index) + math.log(self.ham_conditional_probabilities[unique_word_index].get(unique_word)))})
-                probability_of_spam_per_email[list_index_placeholder].update({email_index: (probability_of_spam_per_email[list_index_placeholder].get(email_index) + math.log(self.spam_conditional_probabilities[unique_word_index].get(unique_word)))})
+                if email[unique_word] > 0:  # This is a check to see if the current unique word appears in the current email, which ensures that we are adding log(conditional probability) only for the words that appear in the current email.
+                    probability_of_ham_per_email[list_index_placeholder].update({email_index: (probability_of_ham_per_email[list_index_placeholder].get(email_index) + math.log(self.ham_conditional_probabilities[unique_word_index].get(unique_word)))})
+                    probability_of_spam_per_email[list_index_placeholder].update({email_index: (probability_of_spam_per_email[list_index_placeholder].get(email_index) + math.log(self.spam_conditional_probabilities[unique_word_index].get(unique_word)))})
                 unique_word_index += 1
             list_index_placeholder += 1
 
@@ -161,10 +162,23 @@ class NaiveBayesClassifier:
 
     @staticmethod
     def report_f_measure(confusion_matrix, testing_dataset_name):
-        precision = confusion_matrix[0, 0] / (confusion_matrix[0, 0] + confusion_matrix[0, 1])
-        recall = confusion_matrix[0, 0] / (confusion_matrix[0, 0] + confusion_matrix[1, 0])
-        f_measure = (2 * precision * recall) / (precision + recall)
-        print("The f-measure for " + testing_dataset_name + " is " + str(f_measure))
+        # Handle division by zero cases:
+        if confusion_matrix[0, 0] + confusion_matrix[0, 1] == 0:
+            precision = 0
+        else:
+            precision = confusion_matrix[0, 0] / (confusion_matrix[0, 0] + confusion_matrix[0, 1])
+
+        if confusion_matrix[0, 0] + confusion_matrix[1, 0] == 0:
+            recall = 0
+        else:
+            recall = confusion_matrix[0, 0] / (confusion_matrix[0, 0] + confusion_matrix[1, 0])
+
+        if precision + recall == 0:
+            f_measure = 0
+        else:
+            f_measure = (2 * precision * recall) / (precision + recall)
+
+        print("Custom Naive Bayes Implementation: The f-measure for " + testing_dataset_name + " is " + str(f_measure))
 
     def run_algorithm(self, run_on_training, feature_data, target_data, testing_dataset_name):
         combined_dataframe = feature_data.join(target_data)
