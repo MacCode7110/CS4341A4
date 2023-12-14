@@ -236,3 +236,4 @@ naive_bayes_classifier_for_subjects.run_algorithm(True, subjects_training_data_x
 naive_bayes_classifier_for_subjects.run_algorithm(False, subjects_testing_data_x, subjects_testing_data_y, "Email subjects stemmed testing data")
 
 # Below we use the scikit learn Naive Bayes classifier on the bodies and subjects datasets and report a comparison of results between the implementation from scratch and the scikit-learn implementation:
+
