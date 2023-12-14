@@ -116,6 +116,7 @@ class NaiveBayesClassifier:
         list_index_placeholder = 0
 
         for email_index, email in feature_data.iterrows():
+            email_indices_list.append(email_index)
             probability_of_ham_per_email = np.append(probability_of_ham_per_email, {email_index: math.log(self.ham_probability_prior)})
             probability_of_spam_per_email = np.append(probability_of_spam_per_email, {email_index: math.log(self.spam_probability_prior)})
             unique_word_index = 0
@@ -124,7 +125,6 @@ class NaiveBayesClassifier:
                 probability_of_spam_per_email[list_index_placeholder].update({email_index: (probability_of_spam_per_email[list_index_placeholder].get(email_index) + math.log(self.spam_conditional_probabilities[unique_word_index].get(unique_word)))})
                 unique_word_index += 1
             list_index_placeholder += 1
-            email_indices_list.append(email_index)
 
         for predicted_classification_index in range(len(predicted_classifications_per_email)):
             if probability_of_ham_per_email[predicted_classification_index].get(email_indices_list[predicted_classification_index]) > probability_of_spam_per_email[predicted_classification_index].get(email_indices_list[predicted_classification_index]):
@@ -133,15 +133,40 @@ class NaiveBayesClassifier:
         return predicted_classifications_per_email
 
     @staticmethod
-    def generate_confusion_matrix(predicted_classifications_per_email):
-        confusion_matrix = []
+    def generate_confusion_matrix(predicted_classifications_per_email, target_data):
+        target_data_nd_array = target_data.to_numpy()
+        target_data_nd_array = target_data_nd_array.flatten()
+        confusion_matrix = np.zeros((2, 2))
+        for prediction_index in range(len(predicted_classifications_per_email)):
+            # 1 corresponds to HAM and 0 corresponds to SPAM. In this case, we are counting a "positive" email as HAM and a "negative" email as SPAM.
+            # (0, 0) = TP, (0, 1) = FP, (1, 0) = FN, (1, 1) = TN
+            if predicted_classifications_per_email[prediction_index] == 1 and int(
+                target_data_nd_array[prediction_index]) == 1:
+                # True positive
+                confusion_matrix[0, 0] += 1
+            elif predicted_classifications_per_email[prediction_index] == 1 and int(
+                target_data_nd_array[prediction_index]) == 0:
+                # False positive
+                confusion_matrix[0, 1] += 1
+            elif predicted_classifications_per_email[prediction_index] == 0 and int(
+                target_data_nd_array[prediction_index]) == 0:
+                # True negative
+                confusion_matrix[1, 1] += 1
+            elif predicted_classifications_per_email[prediction_index] == 0 and int(
+                target_data_nd_array[prediction_index]) == 1:
+                # False negative
+                confusion_matrix[1, 0] += 1
+
         return confusion_matrix
 
     @staticmethod
-    def report_f_measure(confusion_matrix):
-        return 0
+    def report_f_measure(confusion_matrix, testing_dataset_name):
+        precision = confusion_matrix[0, 0] / (confusion_matrix[0, 0] + confusion_matrix[0, 1])
+        recall = confusion_matrix[0, 0] / (confusion_matrix[0, 0] + confusion_matrix[1, 0])
+        f_measure = (2 * precision * recall) / (precision + recall)
+        print("The f-measure for " + testing_dataset_name + " is " + str(f_measure))
 
-    def run_algorithm(self, run_on_training, feature_data, target_data):
+    def run_algorithm(self, run_on_training, feature_data, target_data, testing_dataset_name):
         combined_dataframe = feature_data.join(target_data)
         if run_on_training:
             vocabulary = self.get_vocabulary(feature_data)
@@ -154,8 +179,8 @@ class NaiveBayesClassifier:
             self.train_classifier(vocabulary, ham_emails, spam_emails, number_of_words_in_all_ham_emails, number_of_words_in_all_spam_emails)
         else:
             predicted_classifications_per_email = self.test_classifier(feature_data)
-            confusion_matrix = self.generate_confusion_matrix(predicted_classifications_per_email)
-            self.report_f_measure(confusion_matrix)
+            confusion_matrix = self.generate_confusion_matrix(predicted_classifications_per_email, target_data)
+            self.report_f_measure(confusion_matrix, testing_dataset_name)
 
 
 # Load and split both datasets into training and testing:
@@ -172,7 +197,7 @@ updated_dbworld_subjects_stemmed = dbworld_subjects_stemmed.drop(columns=['id'],
 dbworld_bodies_word_list = updated_dbworld_bodies_stemmed.columns.values.tolist()
 dbworld_subjects_word_list = updated_dbworld_subjects_stemmed.columns.values.tolist()
 
-# Remove the last label in each list (CLASS):
+# Remove the last label (CLASS) in each list:
 
 dbworld_bodies_word_list.remove(dbworld_bodies_word_list[len(dbworld_bodies_word_list) - 1])
 dbworld_subjects_word_list.remove(dbworld_subjects_word_list[len(dbworld_subjects_word_list) - 1])
@@ -204,10 +229,10 @@ subjects_training_data_x, subjects_testing_data_x, subjects_training_data_y, sub
 naive_bayes_classifier_for_bodies = NaiveBayesClassifier(1)
 naive_bayes_classifier_for_subjects = NaiveBayesClassifier(1)
 
-# naive_bayes_classifier_for_bodies.run_algorithm(True, bodies_training_data_x, bodies_training_data_y)
-# naive_bayes_classifier_for_bodies.run_algorithm(False, bodies_testing_data_x, bodies_testing_data_y)
+naive_bayes_classifier_for_bodies.run_algorithm(True, bodies_training_data_x, bodies_training_data_y, None)
+naive_bayes_classifier_for_bodies.run_algorithm(False, bodies_testing_data_x, bodies_testing_data_y, "Email bodies stemmed testing data")
 
-naive_bayes_classifier_for_subjects.run_algorithm(True, subjects_training_data_x, subjects_training_data_y)
-naive_bayes_classifier_for_subjects.run_algorithm(False, subjects_testing_data_x, subjects_testing_data_y)
+naive_bayes_classifier_for_subjects.run_algorithm(True, subjects_training_data_x, subjects_training_data_y, None)
+naive_bayes_classifier_for_subjects.run_algorithm(False, subjects_testing_data_x, subjects_testing_data_y, "Email subjects stemmed testing data")
 
 # Below we use the scikit learn Naive Bayes classifier on the bodies and subjects datasets and report a comparison of results between the implementation from scratch and the scikit-learn implementation:
