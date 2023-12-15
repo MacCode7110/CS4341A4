@@ -17,6 +17,8 @@
 # https://www.analyticsvidhya.com/blog/2021/04/improve-naive-bayes-text-classifier-using-laplace-smoothing/
 # https://devopedia.org/naive-bayes-classifier
 
+# ----------------------------------------------------------------------------------------------------------------------
+
 # Parts a and b combined:
 
 # Key assumptions:
@@ -29,6 +31,8 @@ import pandas as pd
 import numpy as np
 import math
 from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import f1_score
 
 
 class NaiveBayesClassifier:
@@ -249,5 +253,48 @@ naive_bayes_classifier_for_bodies.run_algorithm(False, bodies_testing_data_x, bo
 naive_bayes_classifier_for_subjects.run_algorithm(True, subjects_training_data_x, subjects_training_data_y, None)
 naive_bayes_classifier_for_subjects.run_algorithm(False, subjects_testing_data_x, subjects_testing_data_y, "Email subjects stemmed testing data")
 
-# Below we use the scikit learn Naive Bayes classifier on the bodies and subjects datasets and report a comparison of results between the implementation from scratch and the scikit-learn implementation:
+# Comparison between the performances of my own Naive Bayes implementation on the bodies and subjects testing data (which dataset provides better classification):
+
+# After testing the classifier on both the email bodies and email subjects testing datasets ten consecutive times as an experiment,
+# I found that the email bodies dataset allows my Naive Bayes implementation to make better classifications.
+# This is because the f-measures reported when testing on the email bodies dataset were greater than the f-measures reported
+# when testing on the email subjects dataset six out of ten times.
+# There were only three times when the f-measures for the email subjects dataset were greater than the f-measures for the email bodies dataset, and
+# only one time when the f-measures for the email bodies and email subjects datasets were exactly equal.
+# The f-measures for both the email bodies and email subjects testing datasets fall in the range of 0.6 to 1.0 with the majority of the f-measures surpassing 0.7.
+# ----------------------------------------------------------------------------------------------------------------------
+# Part c
+# Below we use the scikit learn Naive Bayes classifier on the bodies and subjects datasets and describe a comparison between the implementation from scratch and the scikit-learn implementation:
+
+bodies_training_data_x_nd_array = bodies_training_data_x.to_numpy()
+bodies_training_data_y_nd_array = bodies_training_data_y.to_numpy()
+bodies_testing_data_x_nd_array = bodies_testing_data_x.to_numpy()
+bodies_testing_data_y_nd_array = bodies_testing_data_y.to_numpy()
+
+subjects_training_data_x_nd_array = subjects_training_data_x.to_numpy()
+subjects_training_data_y_nd_array = subjects_training_data_y.to_numpy()
+subjects_testing_data_x_nd_array = subjects_testing_data_x.to_numpy()
+subjects_testing_data_y_nd_array = subjects_testing_data_y.to_numpy()
+
+# alpha=1 specifies a laplace smoothing parameter of 1, which was also used when running my own Naive Bayes implementation above.
+multinomial_nb_for_bodies = MultinomialNB(alpha=1)
+multinomial_nb_for_subjects = MultinomialNB(alpha=1)
+
+# Train multinomial_nb on the email bodies training datasets:
+multinomial_nb_for_bodies.fit(bodies_training_data_x_nd_array, bodies_training_data_y_nd_array.flatten())
+
+# Test multinomial_nb on the email bodies testing datasets:
+email_bodies_class_predictions = multinomial_nb_for_bodies.predict(bodies_testing_data_x_nd_array)
+
+# Compute the f-measure for the email bodies testing datasets:
+print("Sci-kit Learn Naive Bayes Implementation: The f-measure for Email bodies stemmed testing data is " + str(f1_score(bodies_testing_data_y_nd_array, email_bodies_class_predictions)))
+
+# Train multinomial_nb on the email subjects training datasets:
+multinomial_nb_for_subjects.fit(subjects_training_data_x_nd_array, subjects_training_data_y_nd_array.flatten())
+
+# Test multinomial_nb on the email subjects testing datasets:
+email_subjects_class_predictions = multinomial_nb_for_subjects.predict(subjects_testing_data_x_nd_array)
+
+# Compute the f-measure for the email subjects testing datasets:
+print("Sci-kit Learn Naive Bayes Implementation: The f-measure for Email subjects stemmed testing data is " + str(f1_score(subjects_testing_data_y_nd_array, email_subjects_class_predictions)))
 
