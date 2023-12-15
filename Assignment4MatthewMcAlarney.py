@@ -289,7 +289,7 @@ naive_bayes_classifier_for_subjects.run_algorithm(False, subjects_testing_data_x
 # ----------------------------------------------------------------------------------------------------------------------
 
 # Part c
-# Below we use the Sci-kit Learn Naive Bayes classifier on the bodies and subjects datasets and provide a comparison between the implementation from scratch and the scikit-learn implementation:
+# Below we use the Sci-kit Learn Naive Bayes classifier on the bodies and subjects datasets and provide a comparison between the implementation from scratch and the Scikit-Learn implementation:
 
 bodies_training_data_x_nd_array = bodies_training_data_x.to_numpy()
 bodies_training_data_y_nd_array = bodies_training_data_y.to_numpy()
