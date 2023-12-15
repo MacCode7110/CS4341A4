@@ -285,7 +285,9 @@ naive_bayes_classifier_for_subjects.run_algorithm(False, subjects_testing_data_x
 # There were only three times when the f-measures for the email subjects dataset were greater than the f-measures for the email bodies dataset, and
 # only one time when the f-measures for the email bodies and email subjects datasets were exactly equal.
 # The f-measures for both the email bodies and email subjects testing datasets fall in the range of 0.6 to 1.0 with the majority of the f-measures surpassing 0.7.
+
 # ----------------------------------------------------------------------------------------------------------------------
+
 # Part c
 # Below we use the scikit learn Naive Bayes classifier on the bodies and subjects datasets and describe a comparison between the implementation from scratch and the scikit-learn implementation:
 
