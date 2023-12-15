@@ -88,7 +88,8 @@ class NaiveBayesClassifier:
         total_number_of_words_in_all_ham_emails_to_int = total_number_of_words_in_all_ham_emails.item()
         return total_number_of_words_in_all_ham_emails_to_int
 
-    def train_classifier(self, vocabulary, ham_emails, spam_emails, total_number_of_words_in_all_ham_emails, total_number_of_words_in_all_spam_emails):
+    def train_classifier(self, vocabulary, ham_emails, spam_emails, total_number_of_words_in_all_ham_emails,
+                         total_number_of_words_in_all_spam_emails):
         # Store a list of dictionaries for the conditional probabilities (probabilities of each word occurring given the Ham and Spam categories):
         for unique_word in vocabulary:
             # Sum the occurrences of the unique word in the ham category (in the current column).
@@ -98,8 +99,13 @@ class NaiveBayesClassifier:
             # In the denominator, 1 is added to the token count for the current unique word, which ultimately means that 1 is summed the same number of times as the number of unique words (the number of unique words is the length of the vocabulary).
             # Furthermore, if the laplace smoothing parameter was increased to 2, adding (2 * length of vocabulary) is equivalent to summing the token counts for each unique word and adding 2 to each token count.
             # This is because when 2 is added to each token count, 2 is added per unique word; this is equal to multiplying the length of the set of unique words (the length of the vocabulary) by 2.
-            conditional_probability_of_unique_word_given_ham = (occurrences_of_unique_word_in_ham + self.laplace_smoothing_parameter) / (total_number_of_words_in_all_ham_emails + (self.laplace_smoothing_parameter * len(vocabulary)))
-            self.ham_conditional_probabilities = np.append(self.ham_conditional_probabilities, {unique_word: conditional_probability_of_unique_word_given_ham})
+            conditional_probability_of_unique_word_given_ham = (
+                                                                           occurrences_of_unique_word_in_ham + self.laplace_smoothing_parameter) / (
+                                                                           total_number_of_words_in_all_ham_emails + (
+                                                                               self.laplace_smoothing_parameter * len(
+                                                                           vocabulary)))
+            self.ham_conditional_probabilities = np.append(self.ham_conditional_probabilities, {
+                unique_word: conditional_probability_of_unique_word_given_ham})
             # Sum the occurrences of the unique word in the spam category (in the current column).
             occurrences_of_unique_word_in_spam = spam_emails[unique_word].sum()
             # In this equation, note that laplace smoothing is implemented in the numerator and denominator.
@@ -107,8 +113,13 @@ class NaiveBayesClassifier:
             # In the denominator, 1 is added to the token count for the current unique word, which ultimately means that 1 is summed the same number of times as the number of unique words (the number of unique words is the length of the vocabulary).
             # Furthermore, if the laplace smoothing parameter was increased to 2, adding (2 * length of vocabulary) is equivalent to summing the token counts for each unique word and adding 2 to each token count.
             # This is because when 2 is added to each token count, 2 is added per unique word; this is equal to multiplying the length of the set of unique words (the length of the vocabulary) by 2.
-            conditional_probability_of_unique_word_given_spam = (occurrences_of_unique_word_in_spam + self.laplace_smoothing_parameter) / (total_number_of_words_in_all_spam_emails + (self.laplace_smoothing_parameter * len(vocabulary)))
-            self.spam_conditional_probabilities = np.append(self.spam_conditional_probabilities, {unique_word: conditional_probability_of_unique_word_given_spam})
+            conditional_probability_of_unique_word_given_spam = (
+                                                                            occurrences_of_unique_word_in_spam + self.laplace_smoothing_parameter) / (
+                                                                            total_number_of_words_in_all_spam_emails + (
+                                                                                self.laplace_smoothing_parameter * len(
+                                                                            vocabulary)))
+            self.spam_conditional_probabilities = np.append(self.spam_conditional_probabilities, {
+                unique_word: conditional_probability_of_unique_word_given_spam})
 
     def test_classifier(self, feature_data):
         # The goal of test_classifier is to classify each email in the feature data as either Ham or Spam.
@@ -121,18 +132,27 @@ class NaiveBayesClassifier:
 
         for email_index, email in feature_data.iterrows():
             email_indices_list.append(email_index)
-            probability_of_ham_per_email = np.append(probability_of_ham_per_email, {email_index: math.log(self.ham_probability_prior)})
-            probability_of_spam_per_email = np.append(probability_of_spam_per_email, {email_index: math.log(self.spam_probability_prior)})
+            probability_of_ham_per_email = np.append(probability_of_ham_per_email,
+                                                     {email_index: math.log(self.ham_probability_prior)})
+            probability_of_spam_per_email = np.append(probability_of_spam_per_email,
+                                                      {email_index: math.log(self.spam_probability_prior)})
             unique_word_index = 0
             for unique_word in feature_data.columns:
-                if email[unique_word] > 0:  # This is a check to see if the current unique word appears in the current email, which ensures that we are adding log(conditional probability) only for the words that appear in the current email.
-                    probability_of_ham_per_email[list_index_placeholder].update({email_index: (probability_of_ham_per_email[list_index_placeholder].get(email_index) + math.log(self.ham_conditional_probabilities[unique_word_index].get(unique_word)))})
-                    probability_of_spam_per_email[list_index_placeholder].update({email_index: (probability_of_spam_per_email[list_index_placeholder].get(email_index) + math.log(self.spam_conditional_probabilities[unique_word_index].get(unique_word)))})
+                if email[
+                    unique_word] > 0:  # This is a check to see if the current unique word appears in the current email, which ensures that we are adding log(conditional probability) only for the words that appear in the current email.
+                    probability_of_ham_per_email[list_index_placeholder].update({email_index: (
+                                probability_of_ham_per_email[list_index_placeholder].get(email_index) + math.log(
+                            self.ham_conditional_probabilities[unique_word_index].get(unique_word)))})
+                    probability_of_spam_per_email[list_index_placeholder].update({email_index: (
+                                probability_of_spam_per_email[list_index_placeholder].get(email_index) + math.log(
+                            self.spam_conditional_probabilities[unique_word_index].get(unique_word)))})
                 unique_word_index += 1
             list_index_placeholder += 1
 
         for predicted_classification_index in range(len(predicted_classifications_per_email)):
-            if probability_of_ham_per_email[predicted_classification_index].get(email_indices_list[predicted_classification_index]) > probability_of_spam_per_email[predicted_classification_index].get(email_indices_list[predicted_classification_index]):
+            if probability_of_ham_per_email[predicted_classification_index].get(
+                    email_indices_list[predicted_classification_index]) > probability_of_spam_per_email[
+                predicted_classification_index].get(email_indices_list[predicted_classification_index]):
                 predicted_classifications_per_email[predicted_classification_index] = 1
 
         return predicted_classifications_per_email
@@ -146,19 +166,19 @@ class NaiveBayesClassifier:
             # 1 corresponds to HAM and 0 corresponds to SPAM. In this case, we are counting a "positive" email as HAM and a "negative" email as SPAM.
             # (0, 0) = TP, (0, 1) = FP, (1, 0) = FN, (1, 1) = TN
             if predicted_classifications_per_email[prediction_index] == 1 and int(
-                target_data_nd_array[prediction_index]) == 1:
+                    target_data_nd_array[prediction_index]) == 1:
                 # True positive
                 confusion_matrix[0, 0] += 1
             elif predicted_classifications_per_email[prediction_index] == 1 and int(
-                target_data_nd_array[prediction_index]) == 0:
+                    target_data_nd_array[prediction_index]) == 0:
                 # False positive
                 confusion_matrix[0, 1] += 1
             elif predicted_classifications_per_email[prediction_index] == 0 and int(
-                target_data_nd_array[prediction_index]) == 0:
+                    target_data_nd_array[prediction_index]) == 0:
                 # True negative
                 confusion_matrix[1, 1] += 1
             elif predicted_classifications_per_email[prediction_index] == 0 and int(
-                target_data_nd_array[prediction_index]) == 1:
+                    target_data_nd_array[prediction_index]) == 1:
                 # False negative
                 confusion_matrix[1, 0] += 1
 
@@ -194,7 +214,8 @@ class NaiveBayesClassifier:
             self.calculate_spam_probability_prior(spam_emails, combined_dataframe)
             number_of_words_in_all_ham_emails = self.get_total_number_of_words_in_all_ham_emails(ham_emails)
             number_of_words_in_all_spam_emails = self.get_total_number_of_words_in_all_spam_emails(spam_emails)
-            self.train_classifier(vocabulary, ham_emails, spam_emails, number_of_words_in_all_ham_emails, number_of_words_in_all_spam_emails)
+            self.train_classifier(vocabulary, ham_emails, spam_emails, number_of_words_in_all_ham_emails,
+                                  number_of_words_in_all_spam_emails)
         else:
             predicted_classifications_per_email = self.test_classifier(feature_data)
             confusion_matrix = self.generate_confusion_matrix(predicted_classifications_per_email, target_data)
@@ -248,14 +269,16 @@ naive_bayes_classifier_for_bodies = NaiveBayesClassifier(1)
 naive_bayes_classifier_for_subjects = NaiveBayesClassifier(1)
 
 naive_bayes_classifier_for_bodies.run_algorithm(True, bodies_training_data_x, bodies_training_data_y, None)
-naive_bayes_classifier_for_bodies.run_algorithm(False, bodies_testing_data_x, bodies_testing_data_y, "Email bodies stemmed testing data")
+naive_bayes_classifier_for_bodies.run_algorithm(False, bodies_testing_data_x, bodies_testing_data_y,
+                                                "Email bodies stemmed testing data")
 
 naive_bayes_classifier_for_subjects.run_algorithm(True, subjects_training_data_x, subjects_training_data_y, None)
-naive_bayes_classifier_for_subjects.run_algorithm(False, subjects_testing_data_x, subjects_testing_data_y, "Email subjects stemmed testing data")
+naive_bayes_classifier_for_subjects.run_algorithm(False, subjects_testing_data_x, subjects_testing_data_y,
+                                                  "Email subjects stemmed testing data")
 
 # Comparison between the performances of my own Naive Bayes implementation on the bodies and subjects testing data (which dataset provides better classification):
 
-# After testing the classifier on both the email bodies and email subjects testing datasets ten consecutive times as an experiment,
+# After testing my classifier on both the email bodies and email subjects testing datasets ten consecutive times as an experiment,
 # I found that the email bodies dataset allows my Naive Bayes implementation to make better classifications.
 # This is because the f-measures reported when testing on the email bodies dataset were greater than the f-measures reported
 # when testing on the email subjects dataset six out of ten times.
@@ -287,7 +310,8 @@ multinomial_nb_for_bodies.fit(bodies_training_data_x_nd_array, bodies_training_d
 email_bodies_class_predictions = multinomial_nb_for_bodies.predict(bodies_testing_data_x_nd_array)
 
 # Compute the f-measure for the email bodies testing datasets:
-print("Sci-kit Learn Naive Bayes Implementation: The f-measure for Email bodies stemmed testing data is " + str(f1_score(bodies_testing_data_y_nd_array, email_bodies_class_predictions)))
+print("Sci-kit Learn Naive Bayes Implementation: The f-measure for Email bodies stemmed testing data is " + str(
+    f1_score(bodies_testing_data_y_nd_array, email_bodies_class_predictions)))
 
 # Train multinomial_nb on the email subjects training datasets:
 multinomial_nb_for_subjects.fit(subjects_training_data_x_nd_array, subjects_training_data_y_nd_array.flatten())
@@ -296,5 +320,20 @@ multinomial_nb_for_subjects.fit(subjects_training_data_x_nd_array, subjects_trai
 email_subjects_class_predictions = multinomial_nb_for_subjects.predict(subjects_testing_data_x_nd_array)
 
 # Compute the f-measure for the email subjects testing datasets:
-print("Sci-kit Learn Naive Bayes Implementation: The f-measure for Email subjects stemmed testing data is " + str(f1_score(subjects_testing_data_y_nd_array, email_subjects_class_predictions)))
+print("Sci-kit Learn Naive Bayes Implementation: The f-measure for Email subjects stemmed testing data is " + str(
+    f1_score(subjects_testing_data_y_nd_array, email_subjects_class_predictions)))
 
+# After testing the Sci-kit Learn classifier on both the email bodies and email subjects testing datasets ten consecutive times as an experiment,
+# I found that the email bodies dataset allows the Sci-kit Learn Naive Bayes implementation to make better classifications.
+# This is because the f-measures reported when testing on the email bodies dataset were greater than the f-measures reported
+# when testing on the email subjects dataset seven out of ten times.
+# There were only two times when the f-measures for the email subjects dataset were greater than the f-measures for the email bodies dataset, and
+# only one time when the f-measures for the email bodies and email subjects datasets were exactly equal.
+# The f-measures for both the email bodies and email subjects testing datasets fall in the range of 0.6 to 1.0 with the majority of the f-measures surpassing 0.7.
+
+# Comparison between my own Naive Bayes implementation and Sci-kit Learns' Naive Bayes implementation:
+# For both implementations, the email bodies dataset allows for better classifications
+# as the f-measures for the predictions on the email bodies dataset are generally greater than the f-measures
+# for the predictions on the email subjects dataset.
+# In addition, between both implementations and for each run of this program, the two f-measures for the email bodies dataset (one from my own implementation and the other from Sci-kit Learn) are always exactly equal
+# and the f-measures for the email subjects dataset (one from my own implementation and the other from Sci-kit Learn) are also always exactly equal. This is a good indicator that my own Naive Bayes implementation and Sci-Kit Learns' implementation have very similar performances if not the same performances on both email datasets.
